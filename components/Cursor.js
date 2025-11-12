@@ -47,25 +47,17 @@ export default function Cursor() {
     window.addEventListener("mousemove", moveCursor, { passive: true });
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
 
-    const updateHoverListeners = () => {
-      document.querySelectorAll("button, a, input, textarea, select, .hover-target").forEach((el) => {
-        el.addEventListener("mouseenter", handleHover);
-        el.addEventListener("mouseleave", handleLeave);
-      });
-    };
-
-    updateHoverListeners();
-    
-    const observer = new MutationObserver(updateHoverListeners);
-    observer.observe(document.body, { childList: true, subtree: true });
+    document.querySelectorAll("button, a, input, textarea, select").forEach((el) => {
+      el.addEventListener("mouseenter", handleHover);
+      el.addEventListener("mouseleave", handleLeave);
+    });
 
     disableMouse();
 
     return () => {
       window.removeEventListener("mousemove", moveCursor);
       window.removeEventListener("touchstart", handleTouchStart);
-      observer.disconnect();
-      document.querySelectorAll("button, a, input, textarea, select, .hover-target").forEach((el) => {
+      document.querySelectorAll("button, a, input, textarea, select").forEach((el) => {
         el.removeEventListener("mouseenter", handleHover);
         el.removeEventListener("mouseleave", handleLeave);
       });

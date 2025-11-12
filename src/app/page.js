@@ -2,28 +2,21 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
-
-const metrics = [
-  { value: 2847, label: 'Active Ventures', growth: '+23%' },
-  { value: 12500, label: 'Innovators', growth: '+67%' },
-  { value: 450, label: 'Investments Made', growth: '+142%' },
-  { value: 89, label: 'Cities Connected', growth: '+31%' }
-];
+import GovSchemes from '@/components/GovSchemes';
 
 export default function HomePage() {
   const { theme } = useTheme();
-  const [loaded, setLoaded] = useState(false);
-  const [counters, setCounters] = useState(metrics.map(() => 0));
+  const [counters, setCounters] = useState([0, 0, 0, 0]);
+  const targets = [3247, 15600, 892, 127];
+  const labels = ['Active Startups', 'Entrepreneurs', 'Investments Made', 'Cities Connected'];
 
   useEffect(() => {
-    setLoaded(true);
-    const intervals = metrics.map((metric, idx) => {
-      const increment = metric.value / 50;
+    const intervals = targets.map((target, idx) => {
       return setInterval(() => {
         setCounters(prev => {
           const newCounters = [...prev];
-          if (newCounters[idx] < metric.value) {
-            newCounters[idx] = Math.min(newCounters[idx] + increment, metric.value);
+          if (newCounters[idx] < target) {
+            newCounters[idx] = Math.min(newCounters[idx] + Math.ceil(target / 50), target);
           }
           return newCounters;
         });
@@ -35,64 +28,107 @@ export default function HomePage() {
 
   return (
     <div className="theme-bg theme-text">
-      <section className="relative overflow-hidden py-24">
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-0 -left-4 w-96 h-96 bg-purple-500 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-500 rounded-full blur-3xl" />
-        </div>
-        
-        <div className="relative max-w-7xl mx-auto px-6">
-          <div className={`text-center ${loaded ? 'slide-up' : 'opacity-0'}`}>
-            <h1 className="text-6xl md:text-8xl font-bold mb-6">
-              <span className="block">Digital India's</span>
-              <span className="gradient-text">Innovation Engine</span>
-            </h1>
-            
-            <p className="text-xl theme-text-secondary max-w-3xl mx-auto leading-relaxed mb-12">
-              Connecting visionaries, founders, and investors to build the next wave 
-              of breakthrough ventures shaping Bharat's digital future.
-            </p>
+      <section className="hero-gradient py-24">
+        <div className="container-main text-center">
+          <h1 style={{ 
+            fontSize: 'clamp(3rem, 8vw, 5rem)', 
+            fontWeight: 800,
+            lineHeight: 1.1,
+            marginBottom: '24px'
+          }}>
+            Welcome to{' '}
+            <span className="gradient-text">ENTRODE</span>
+          </h1>
+          
+          <p className="theme-text-secondary" style={{ 
+            fontSize: '20px',
+            maxWidth: '720px',
+            margin: '0 auto 48px'
+          }}>
+            India's premier startup ecosystem connecting innovators with opportunities.
+            Build, launch, and scale your venture in the digital Bharat.
+          </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/profile" className="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold hover-lift">
-                Create Your Profile
-              </Link>
-              <Link href="/explore" className={`px-8 py-4 rounded-full border-2 theme-border theme-text font-semibold hover-lift ${theme === 'neon' ? 'neon-border' : ''}`}>
-                Explore Ventures
-              </Link>
-            </div>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Link href="/auth" className="btn btn-primary" style={{ fontSize: '18px', padding: '16px 32px' }}>
+              Get Started
+            </Link>
+            <Link href="/explore" className="btn btn-outline" style={{ fontSize: '18px', padding: '16px 32px' }}>
+              Explore Startups
+            </Link>
           </div>
+        </div>
+      </section>
 
-          <div className="grid md:grid-cols-4 gap-6 mt-24">
-            {metrics.map((metric, idx) => (
-              <div key={idx} className={`p-6 rounded-2xl glass hover-lift ${theme === 'neon' ? 'neon-border' : ''}`}>
-                <div className="text-3xl font-bold theme-accent">
-                  {Math.floor(counters[idx]).toLocaleString()}
+      <section className="py-20 theme-bg-secondary">
+        <div className="container-main">
+          <div className="stats-grid">
+            {counters.map((count, idx) => (
+              <div key={idx} className="text-center">
+                <div style={{ 
+                  fontSize: '48px', 
+                  fontWeight: 'bold',
+                  background: `linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent)) 50%, rgba(var(--accent), 0.6))`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>
+                  {count.toLocaleString()}+
                 </div>
-                <div className="theme-text-secondary mt-1">{metric.label}</div>
-                <div className="text-sm text-green-500 mt-2">{metric.growth} this month</div>
+                <div className="theme-text-secondary" style={{ marginTop: '8px' }}>
+                  {labels[idx]}
+                </div>
               </div>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="mt-24 text-center">
-            <h2 className="text-4xl font-bold mb-12">How It Works</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                { step: '01', title: 'Build Your Profile', desc: 'Showcase your expertise, vision, and track record' },
-                { step: '02', title: 'Launch or Discover', desc: 'Create ventures or explore investment opportunities' },
-                { step: '03', title: 'Connect & Grow', desc: 'Network with founders, mentors, and investors' }
-              ].map((item, idx) => (
-                <div key={idx} className="text-left">
-                  <div className="text-5xl font-bold theme-accent mb-4">{item.step}</div>
-                  <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                  <p className="theme-text-secondary">{item.desc}</p>
-                </div>
-              ))}
+      <GovSchemes />
+
+      <section className="py-20 theme-bg-secondary">
+        <div className="container-main text-center">
+          <h2 className="text-4xl font-bold mb-12">How It Works</h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="card">
+              <div className="theme-accent text-5xl font-bold mb-4">01</div>
+              <h3 className="text-xl font-bold mb-2">Create Profile</h3>
+              <p className="theme-text-secondary">
+                Sign up and build your entrepreneur profile
+              </p>
+            </div>
+            
+            <div className="card">
+              <div className="theme-accent text-5xl font-bold mb-4">02</div>
+              <h3 className="text-xl font-bold mb-2">Launch Startup</h3>
+              <p className="theme-text-secondary">
+                Share your vision and startup details
+              </p>
+            </div>
+            
+            <div className="card">
+              <div className="theme-accent text-5xl font-bold mb-4">03</div>
+              <h3 className="text-xl font-bold mb-2">Get Funded</h3>
+              <p className="theme-text-secondary">
+                Connect with investors and grow
+              </p>
             </div>
           </div>
         </div>
       </section>
+
+      {theme === 'neon' && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3Cpattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"%3E%3Cpath d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(0,255,255,0.05)" stroke-width="1"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="100%25" height="100%25" fill="url(%23grid)" /%3E%3C/svg%3E")',
+          pointerEvents: 'none',
+          zIndex: 1
+        }} />
+      )}
     </div>
   );
 }

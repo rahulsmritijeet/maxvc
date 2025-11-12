@@ -1,197 +1,300 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { createVenture } from '@/lib/sheets';
 import toast from 'react-hot-toast';
 
-const sectors = ['AI/ML', 'FinTech', 'HealthTech', 'EdTech', 'AgriTech', 'SpaceTech', 'CleanTech', 'DeepTech', 'ConsumerTech', 'Logistics'];
-const stages = ['Idea', 'Prototype', 'MVP', 'Growth', 'Scale'];
+const categories = [
+  'FinTech', 'EdTech', 'HealthTech', 'AgriTech', 'E-Commerce',
+  'SaaS', 'AI/ML', 'Blockchain', 'IoT', 'CleanTech',
+  'FoodTech', 'TravelTech', 'LogisticsTech', 'RetailTech', 'Other'
+];
 
-export default function CreateVenture() {
+const stages = ['Ideation', 'Validation', 'Growth', 'Scale'];
+
+const fundingOptions = [
+  'Not Seeking', 'Under ₹10L', '₹10L - ₹50L', '₹50L - ₹1Cr', 
+  '₹1Cr - ₹5Cr', '₹5Cr - ₹10Cr', 'Above ₹10Cr'
+];
+
+export default function CreatePage() {
   const router = useRouter();
-  const [submitting, setSubmitting] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [venture, setVenture] = useState({
-    title: '',
-    tagline: '',
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'FinTech',
+    stage: 'Ideation',
     description: '',
-    sector: 'AI/ML',
-    stage: 'Idea',
-    fundingTarget: '',
-    teamSize: '1-5',
+    fundingTarget: 'Not Seeking',
     website: '',
     pitch: '',
-    vision: ''
+    teamSize: '',
+    location: '',
+    problem: '',
+    solution: '',
+    marketSize: '',
+    competitors: '',
+    revenue: '',
+    achievements: ''
   });
 
   useEffect(() => {
-    const userProfile = localStorage.getItem('userProfile');
-    if (!userProfile) {
-      toast.error('Please create your profile first');
-      router.push('/profile');
-    } else {
-      setProfile(JSON.parse(userProfile));
+    if (!user) {
+      toast.error('Please sign in to create a startup');
+      router.push('/auth');
     }
-  }, []);
+  }, [user, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!venture.title || !venture.tagline || !venture.description) {
-      toast.error('Please fill in all required fields');
+    if (!formData.name || !formData.description) {
+      toast.error('Please fill required fields');
       return;
     }
 
-    setSubmitting(true);
-    
-    const ventureData = {
-      ...venture,
-      id: `v_${Date.now()}`,
-      founder: profile.name,
-      founderEmail: profile.email,
-      location: profile.location,
-      timestamp: Date.now(),
-      pulse: 0,
-      investors: []
-    };
+    setLoading(true);
+    try {
+      const ventureData = {
+        ...formData,
+        founder: user.name,
+        founderEmail: user.email,
+        id: `venture_${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        pulse: 0,
+        investors: []
+      };
 
-    const existing = JSON.parse(localStorage.getItem('ventures') || '[]');
-    existing.push(ventureData);
-    localStorage.setItem('ventures', JSON.stringify(existing));
-    
-    toast.success('Venture launched successfully!');
-    router.push('/explore');
+      await createVenture(ventureData);
+      toast.success('Startup created successfully!');
+      router.push('/explore');
+    } catch (error) {
+      toast.error('Failed to create startup');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const update = (field, value) => {
-    setVenture(prev => ({ ...prev, [field]: value }));
+  const updateField = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  if (!user) return null;
 
   return (
-    <div className="theme-bg theme-text min-h-screen py-12">
-      <div className="max-w-4xl mx-auto px-6">
+    <div className="min-h-screen theme-bg theme-text py-12">
+      <div className="container-main">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold gradient-text mb-4">Launch Your Venture</h1>
-          <p className="theme-text-secondary text-lg">Transform your vision into reality</p>
+          <h1 className="text-4xl font-bold gradient-text mb-4">
+            Launch Your Startup
+          </h1>
+          <p className="theme-text-secondary">
+            Share your vision with potential investors and partners
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="glass rounded-2xl p-8 space-y-8">
+        <form onSubmit={handleSubmit} className="card" style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-2 theme-text-secondary">Venture Name*</label>
+              <label className="block theme-text-secondary text-sm mb-2">
+                Startup Name *
+              </label>
               <input
                 type="text"
+                className="input-field"
+                value={formData.name}
+                onChange={(e) => updateField('name', e.target.value)}
+                placeholder="Enter your startup name"
                 required
-                maxLength="60"
-                className="w-full px-4 py-3 rounded-xl theme-bg-secondary theme-text border theme-border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                value={venture.title}
-                onChange={(e) => update('title', e.target.value)}
-                placeholder="Enter a memorable name"
               />
+            </div>
+
+            <div>
+              <label className="block theme-text-secondary text-sm mb-2">
+                Category *
+              </label>
+              <select
+                className="input-field"
+                value={formData.category}
+                onChange={(e) => updateField('category', e.target.value)}
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block theme-text-secondary text-sm mb-2">
+                Current Stage *
+              </label>
+              <select
+                className="input-field"
+                value={formData.stage}
+                onChange={(e) => updateField('stage', e.target.value)}
+              >
+                {stages.map(stage => (
+                  <option key={stage} value={stage}>{stage}</option>
+                ))}
+              </select>
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-2 theme-text-secondary">Tagline*</label>
-              <input
-                type="text"
-                required
-                maxLength="120"
-                className="w-full px-4 py-3 rounded-xl theme-bg-secondary theme-text border theme-border focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={venture.tagline}
-                onChange={(e) => update('tagline', e.target.value)}
-                placeholder="One line that captures your essence"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 theme-text-secondary">Sector*</label>
-              <select
-                className="w-full px-4 py-3 rounded-xl theme-bg-secondary theme-text border theme-border focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={venture.sector}
-                onChange={(e) => update('sector', e.target.value)}
-              >
-                {sectors.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 theme-text-secondary">Current Stage*</label>
-              <select
-                className="w-full px-4 py-3 rounded-xl theme-bg-secondary theme-text border theme-border focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={venture.stage}
-                onChange={(e) => update('stage', e.target.value)}
-              >
-                {stages.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 theme-text-secondary">Team Size</label>
-              <select
-                className="w-full px-4 py-3 rounded-xl theme-bg-secondary theme-text border theme-border focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={venture.teamSize}
-                onChange={(e) => update('teamSize', e.target.value)}
-              >
-                <option value="1-5">1-5 members</option>
-                <option value="6-20">6-20 members</option>
-                <option value="21-50">21-50 members</option>
-                <option value="50+">50+ members</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 theme-text-secondary">Funding Target</label>
-              <input
-                type="text"
-                className="w-full px-4 py-3 rounded-xl theme-bg-secondary theme-text border theme-border focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={venture.fundingTarget}
-                onChange={(e) => update('fundingTarget', e.target.value)}
-                placeholder="INR 50L seed round"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-2 theme-text-secondary">Description*</label>
+              <label className="block theme-text-secondary text-sm mb-2">
+                Brief Description *
+              </label>
               <textarea
-                required
-                rows="4"
-                maxLength="500"
-                className="w-full px-4 py-3 rounded-xl theme-bg-secondary theme-text border theme-border focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                value={venture.description}
-                onChange={(e) => update('description', e.target.value)}
-                placeholder="What problem are you solving?"
-              />
-              <p className="text-sm theme-text-secondary mt-1">{venture.description.length}/500</p>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-2 theme-text-secondary">Your Vision</label>
-              <textarea
+                className="input-field"
                 rows="3"
-                className="w-full px-4 py-3 rounded-xl theme-bg-secondary theme-text border theme-border focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                value={venture.vision}
-                onChange={(e) => update('vision', e.target.value)}
-                placeholder="Where do you see this in 5 years?"
+                value={formData.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                placeholder="What does your startup do? (2-3 sentences)"
+                required
               />
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-2 theme-text-secondary">Website</label>
+            <div>
+              <label className="block theme-text-secondary text-sm mb-2">
+                Funding Requirement
+              </label>
+              <select
+                className="input-field"
+                value={formData.fundingTarget}
+                onChange={(e) => updateField('fundingTarget', e.target.value)}
+              >
+                {fundingOptions.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block theme-text-secondary text-sm mb-2">
+                Team Size
+              </label>
+              <input
+                type="text"
+                className="input-field"
+                value={formData.teamSize}
+                onChange={(e) => updateField('teamSize', e.target.value)}
+                placeholder="e.g., 5-10 members"
+              />
+            </div>
+
+            <div>
+              <label className="block theme-text-secondary text-sm mb-2">
+                Location
+              </label>
+              <input
+                type="text"
+                className="input-field"
+                value={formData.location}
+                onChange={(e) => updateField('location', e.target.value)}
+                placeholder="City, State"
+              />
+            </div>
+
+            <div>
+              <label className="block theme-text-secondary text-sm mb-2">
+                Website
+              </label>
               <input
                 type="url"
-                className="w-full px-4 py-3 rounded-xl theme-bg-secondary theme-text border theme-border focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={venture.website}
-                onChange={(e) => update('website', e.target.value)}
+                className="input-field"
+                value={formData.website}
+                onChange={(e) => updateField('website', e.target.value)}
                 placeholder="https://..."
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block theme-text-secondary text-sm mb-2">
+                Problem Statement
+              </label>
+              <textarea
+                className="input-field"
+                rows="3"
+                value={formData.problem}
+                onChange={(e) => updateField('problem', e.target.value)}
+                placeholder="What problem are you solving?"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block theme-text-secondary text-sm mb-2">
+                Your Solution
+              </label>
+              <textarea
+                className="input-field"
+                rows="3"
+                value={formData.solution}
+                onChange={(e) => updateField('solution', e.target.value)}
+                placeholder="How are you solving this problem?"
+              />
+            </div>
+
+            <div>
+              <label className="block theme-text-secondary text-sm mb-2">
+                Market Size
+              </label>
+              <input
+                type="text"
+                className="input-field"
+                value={formData.marketSize}
+                onChange={(e) => updateField('marketSize', e.target.value)}
+                placeholder="e.g., ₹1000 Cr TAM"
+              />
+            </div>
+
+            <div>
+              <label className="block theme-text-secondary text-sm mb-2">
+                Monthly Revenue
+              </label>
+              <input
+                type="text"
+                className="input-field"
+                value={formData.revenue}
+                onChange={(e) => updateField('revenue', e.target.value)}
+                placeholder="e.g., ₹5 Lakhs MRR"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block theme-text-secondary text-sm mb-2">
+                Key Achievements
+              </label>
+              <textarea
+                className="input-field"
+                rows="2"
+                value={formData.achievements}
+                onChange={(e) => updateField('achievements', e.target.value)}
+                placeholder="Awards, recognitions, milestones..."
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block theme-text-secondary text-sm mb-2">
+                Elevator Pitch
+              </label>
+              <textarea
+                className="input-field"
+                rows="4"
+                value={formData.pitch}
+                onChange={(e) => updateField('pitch', e.target.value)}
+                placeholder="Your 60-second pitch to investors..."
               />
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold text-lg hover-lift disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="btn btn-primary" 
+            style={{ width: '100%', marginTop: '32px' }}
           >
-            {submitting ? 'Launching...' : 'Launch Venture'}
+            {loading ? 'Creating...' : 'Launch Startup'}
           </button>
         </form>
       </div>

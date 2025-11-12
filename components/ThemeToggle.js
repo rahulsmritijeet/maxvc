@@ -5,7 +5,7 @@ export default function ThemeToggle() {
   const { theme, switchTheme } = useTheme();
 
   return (
-    <div className="flex items-center space-x-1 p-1 rounded-full theme-bg-secondary">
+    <div className="flex gap-1 p-1 rounded-full theme-bg-secondary">
       <button
         onClick={() => switchTheme('light')}
         className={`p-2 rounded-full transition-all ${theme === 'light' ? 'bg-white shadow-md' : ''}`}

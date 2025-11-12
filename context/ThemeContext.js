@@ -7,14 +7,14 @@ export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState('light');
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme') || 'light';
+    const saved = localStorage.getItem('entrode-theme') || 'light';
     setTheme(saved);
     document.documentElement.setAttribute('data-theme', saved);
   }, []);
 
   const switchTheme = (newTheme) => {
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    localStorage.setItem('entrode-theme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
